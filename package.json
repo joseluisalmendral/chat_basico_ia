@@ -1,7 +1,7 @@
 {
   "name": "chat-ia",
   "version": "0.1.0",
-  "homepage": "https://joseluisalmendral.github.io/app_chat_basico2",
+  "homepage": "https://joseluisalmendral.github.io/chat_basico_ia",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
