@@ -1,12 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import './App.css';
+import { Send, Loader2, MessageSquare } from 'lucide-react';
+import './AppNew.css';
 
+// Componente de animación inicial
+const IntroAnimation = ({ onAnimationComplete }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onAnimationComplete();
+    }, 3000); // La animación dura 3 segundos
+
+    return () => clearTimeout(timer);
+  }, [onAnimationComplete]);
+
+  return (
+    <div className="intro-animation">
+      <h1 className="intro-text">Almendral AI</h1>
+    </div>
+  );
+};
+
+// Componente principal
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [model, setModel] = useState('prod'); // 'prod' o 'test'
   const messagesEndRef = useRef(null);
+
+  // URLs de los webhooks
+  const webhooks = {
+    prod: 'https://n8nalmendral.com/webhook/6f7b288e-1efe-4504-a6fd-660931327269',
+    test: 'https://n8nalmendral.com/webhook-test/6f7b288e-1efe-4504-a6fd-660931327269'
+  };
 
   // Función para desplazarse al último mensaje
   const scrollToBottom = () => {
@@ -17,7 +43,14 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  // Función para enviar mensaje al webhook real con mejor manejo de errores
+  // Función para cambiar el modelo
+  const changeModel = (newModel) => {
+    setModel(newModel);
+    // Opcional: Limpiar la conversación al cambiar de modelo
+    // setMessages([]);
+  };
+
+  // Función para enviar mensaje al webhook
   const sendMessage = (e) => {
     e.preventDefault();
     
@@ -34,8 +67,8 @@ function App() {
     setInput('');
     setIsLoading(true);
     
-    // CONEXIÓN REAL AL WEBHOOK CON MEJOR MANEJO DE ERRORES
-    fetch('https://n8nalmendral.com/webhook/6f7b288e-1efe-4504-a6fd-660931327269', {
+    // Conexión al webhook según el modelo seleccionado
+    fetch(webhooks[model], {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,30 +80,24 @@ function App() {
         if (!response.ok) {
           throw new Error(`Error en la respuesta del servidor: ${response.status}`);
         }
-        // Primero convertimos la respuesta a texto para ver qué estamos recibiendo
         return response.text();
       })
       .then(text => {
         console.log('Respuesta como texto:', text);
-        // Si está vacío, lanzamos un error
         if (!text || text.trim() === '') {
           throw new Error('Respuesta vacía del servidor');
         }
-        // Intentamos parsear el texto como JSON
         try {
           return JSON.parse(text);
         } catch (e) {
           console.error('Error al parsear JSON:', e);
-          // Si no podemos parsear JSON, devolvemos un objeto con el texto como mensaje
           return { output: text };
         }
       })
       .then(data => {
         console.log('Datos procesados:', data);
-        // Extraemos el mensaje correcto según la estructura de respuesta
         const responseText = data.output || data.response || data.message || JSON.stringify(data);
         
-        // Agregar respuesta del modelo
         const aiMessage = { 
           id: Date.now() + 1, 
           text: responseText, 
@@ -81,7 +108,6 @@ function App() {
       })
       .catch(error => {
         console.error('Error completo:', error);
-        // Mostrar mensaje de error más detallado
         setMessages(prev => [...prev, { 
           id: Date.now() + 1, 
           text: `Error: ${error.message}. Por favor, intenta de nuevo.`, 
@@ -93,43 +119,57 @@ function App() {
       });
   };
 
+  // Si todavía se muestra la animación de introducción
+  if (showIntro) {
+    return <IntroAnimation onAnimationComplete={() => setShowIntro(false)} />;
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Encabezado */}
-      <header className="bg-white shadow-sm p-4 flex items-center justify-center">
-        <h1 className="text-xl font-semibold text-gray-800">Chat con IA</h1>
+    <div className="chat-container">
+      {/* Encabezado con selector de modelos */}
+      <header className="chat-header">
+        <h1>Almendral AI</h1>
+        <div className="model-tabs">
+          <button 
+            className={`tab-button ${model === 'prod' ? 'active' : ''}`}
+            onClick={() => changeModel('prod')}
+          >
+            Producción
+          </button>
+          <button 
+            className={`tab-button ${model === 'test' ? 'active' : ''}`}
+            onClick={() => changeModel('test')}
+          >
+            Test
+          </button>
+        </div>
       </header>
       
       {/* Área de mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="messages-area">
         {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500 text-center">
-              Envía un mensaje para comenzar una conversación...
-            </p>
+          <div className="empty-chat">
+            <MessageSquare size={48} />
+            <p>Envía un mensaje para comenzar una conversación...</p>
           </div>
         )}
         
         {messages.map((msg) => (
           <div 
             key={msg.id} 
-            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`message-container ${msg.sender === 'user' ? 'user' : 'ai'}`}
           >
-            <div 
-              className={`message ${msg.sender === 'user' ? 'user-message' : 'ai-message'}`}
-            >
+            <div className="message-bubble">
               <p>{msg.text}</p>
             </div>
           </div>
         ))}
         
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="message ai-message loading">
-              <div className="loading-indicator">
-                <Loader2 className="loader-icon" />
-                <p>Pensando...</p>
-              </div>
+          <div className="message-container ai">
+            <div className="message-bubble loading">
+              <Loader2 className="loader-icon" />
+              <p>Pensando...</p>
             </div>
           </div>
         )}
@@ -138,24 +178,23 @@ function App() {
       </div>
       
       {/* Input para enviar mensajes */}
-      <div className="message-input">
-        <div className="input-container">
+      <div className="input-area">
+        <form onSubmit={sendMessage} className="message-form">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage(e)}
             placeholder="Escribe un mensaje..."
-            className="text-input"
+            className="message-input"
           />
           <button
-            onClick={sendMessage}
+            type="submit"
             disabled={isLoading || !input.trim()}
             className={`send-button ${isLoading || !input.trim() ? 'disabled' : ''}`}
           >
-            <Send className="send-icon" />
+            <Send />
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
