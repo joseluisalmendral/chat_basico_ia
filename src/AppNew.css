@@ -263,7 +263,7 @@ body {
 .message-form {
   display: flex;
   gap: 0.75rem;
-  align-items: center;
+  align-items: flex-end;
   border-radius: 1.5rem;
   background-color: #292929;
   padding: 0.5rem 0.75rem;
@@ -282,6 +282,13 @@ body {
   padding: 0.75rem;
   color: #f5f5f5;
   font-size: 0.95rem;
+  resize: none;
+  overflow-y: auto;
+  min-height: 20px;
+  max-height: 150px;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: height 0.1s ease;
 }
 
 .message-input:focus {
@@ -290,6 +297,20 @@ body {
 
 .message-input::placeholder {
   color: #9e9e9e;
+}
+
+/* Estilizar la barra de desplazamiento del textarea */
+.message-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.message-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-input::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 39, 176, 0.5);
+  border-radius: 4px;
 }
 
 .send-button {
@@ -304,6 +325,8 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  align-self: flex-end;
+  margin-bottom: 0.5rem;
 }
 
 .send-button:hover {
@@ -327,6 +350,7 @@ body {
 
 .markdown-paragraph {
   margin-bottom: 0.75rem;
+  white-space: pre-wrap;  /* Preserva los saltos de línea */
 }
 
 .markdown-paragraph:last-child {
@@ -692,4 +716,176 @@ body {
 
 .send-button:hover {
   background-color: #7b1fa2 !important;
+}
+
+/* Instrucciones para el usuario */
+.input-instructions {
+  text-align: center;
+  padding: 0.5rem 0 0;
+  color: #9e9e9e;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Estilos para el mensaje del usuario con Markdown */
+.user-markdown {
+  color: white;
+}
+
+.user-markdown a {
+  color: #e6e6ff;
+  text-decoration: underline;
+}
+
+.user-markdown code {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #f0f0f0;
+}
+
+.user-markdown pre {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.user-markdown blockquote {
+  border-left-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Ajustar markdown content en los mensajes del usuario */
+.message-container.user .markdown-content h1,
+.message-container.user .markdown-content h2,
+.message-container.user .markdown-content h3 {
+  color: white;
+}
+
+.message-container.user .markdown-content ul,
+.message-container.user .markdown-content ol {
+  color: white;
+}
+
+/* Estilos para la visualización de código en mensajes del usuario */
+.message-container.user .code-block-container {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.message-container.user .code-block-header {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Asegurar que los enlaces en mensajes del usuario sean legibles */
+.message-container.user a {
+  color: #e1bee7;
+  text-decoration: underline;
+}
+
+/* Estilos para la vista previa de Markdown en tiempo real */
+
+/* Botón de vista previa */
+.preview-button {
+  background-color: transparent;
+  color: #9e9e9e;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.preview-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e1bee7;
+}
+
+.preview-button.active {
+  color: #9c27b0;
+}
+
+/* Contenedor de vista previa */
+.markdown-preview {
+  background-color: #292929;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(156, 39, 176, 0.3);
+  overflow: hidden;
+  max-height: 300px;
+  transition: all 0.3s ease;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: rgba(156, 39, 176, 0.1);
+  border-bottom: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.preview-header span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #9c27b0;
+}
+
+.close-preview {
+  background: transparent;
+  border: none;
+  color: #9e9e9e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-preview:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e1bee7;
+}
+
+.preview-content {
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: 250px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 39, 176, 0.5) transparent;
+}
+
+.preview-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.preview-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-content::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 39, 176, 0.5);
+  border-radius: 4px;
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 480px) {
+  .markdown-preview {
+    max-height: 200px;
+  }
+  
+  .preview-content {
+    max-height: 150px;
+  }
+  
+  .preview-header {
+    padding: 0.3rem 0.7rem;
+  }
+  
+  /* Ajustar el tamaño del icono en las instrucciones */
+  .input-instructions svg {
+    vertical-align: middle;
+  }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, MessageSquare, Plus, Copy, Check, Image, File, X } from 'lucide-react';
+import { Send, Loader2, MessageSquare, Plus, Copy, Check, Image, File, X, Eye, EyeOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -54,9 +54,12 @@ const CodeBlock = ({ language, value }) => {
 };
 
 // Componente para renderizar mensajes con Markdown
-const MarkdownMessage = ({ text }) => {
+const MarkdownMessage = ({ text, className = "" }) => {
+  // Asegurar que los saltos de línea se preserven convirtiendo \n a saltos de línea Markdown
+  const processedText = text.replace(/\n/g, '  \n');
+
   return (
-    <div className="markdown-content">
+    <div className={`markdown-content ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -79,7 +82,7 @@ const MarkdownMessage = ({ text }) => {
           }
         }}
       >
-        {text}
+        {processedText}
       </ReactMarkdown>
     </div>
   );
@@ -131,17 +134,38 @@ function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [model, setModel] = useState('prod'); // 'prod' o 'test'
   const [attachment, setAttachment] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showPreview, setShowPreview] = useState(false); // Estado para controlar la vista previa
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const inputAreaRef = useRef(null); // Referencia al área de input
   const [shouldFocus, setShouldFocus] = useState(false);
+  const formRef = useRef(null);
 
   // URLs de los webhooks
   const webhooks = {
     prod: 'https://n8nalmendral.com/webhook/6f7b288e-1efe-4504-a6fd-660931327269',
     test: 'https://n8nalmendral.com/webhook-test/6f7b288e-1efe-4504-a6fd-660931327269'
   };
+
+  // Detectar si es dispositivo móvil al cargar
+  useEffect(() => {
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      setIsMobile(width <= 768);
+    };
+    
+    // Comprobar al inicio
+    checkMobile();
+    
+    // Comprobar cuando cambie el tamaño de la ventana
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Función para desplazarse al último mensaje
   const scrollToBottom = () => {
@@ -225,6 +249,37 @@ function App() {
     }
   };
 
+  // Manejar teclas (Enter y Shift+Enter)
+  const handleKeyDown = (e) => {
+    // Si es móvil, Enter añade un salto de línea (comportamiento normal)
+    // Si es desktop:
+    //   - Enter sin Shift envía el mensaje
+    //   - Shift+Enter añade un salto de línea
+    if (e.key === 'Enter') {
+      if (!isMobile && !e.shiftKey) {
+        e.preventDefault(); // Prevenir salto de línea
+        if (input.trim() || attachment) {
+          formRef.current.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }
+    }
+  };
+
+  // Auto-resize del textarea
+  const handleInput = (e) => {
+    const textarea = e.target;
+    
+    // Guardamos el valor del input
+    setInput(e.target.value);
+    
+    // Resetear altura para calcular altura correcta
+    textarea.style.height = 'auto';
+    
+    // Establecer nueva altura basada en el contenido
+    const newHeight = Math.min(textarea.scrollHeight, 150); // Máximo 150px
+    textarea.style.height = `${newHeight}px`;
+  };
+
   // Función para enviar mensaje al webhook
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -242,6 +297,12 @@ function App() {
     
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    
+    // Resetear altura del textarea
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+    
     setIsLoading(true);
     
     // Preparar los datos para enviar al webhook
@@ -311,6 +372,8 @@ function App() {
       }]);
     } finally {
       setIsLoading(false);
+      // Desactivar la vista previa después de enviar el mensaje
+      setShowPreview(false);
       // Resetear el input de archivo si existe
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -366,17 +429,16 @@ function App() {
             className={`message-container ${msg.sender === 'user' ? 'user' : 'ai'}`}
           >
             <div className="message-bubble">
-              {msg.sender === 'ai' ? (
-                <MarkdownMessage text={msg.text} />
-              ) : (
-                <>
-                  <p>{msg.text}</p>
-                  {msg.attachment && (
-                    <div className="message-attachment">
-                      <img src={msg.attachment} alt="Attachment" className="attachment-preview" />
-                    </div>
-                  )}
-                </>
+              {/* Usar MarkdownMessage para AMBOS tipos de mensajes */}
+              <MarkdownMessage 
+                text={msg.text} 
+                className={msg.sender === 'user' ? 'user-markdown' : 'ai-markdown'}
+              />
+              
+              {msg.attachment && (
+                <div className="message-attachment">
+                  <img src={msg.attachment} alt="Attachment" className="attachment-preview" />
+                </div>
               )}
             </div>
           </div>
@@ -400,7 +462,22 @@ function App() {
           <FilePreview file={attachment} onRemove={removeAttachment} />
         )}
         
-        <form onSubmit={sendMessage} className="message-form">
+        {/* Vista previa del Markdown */}
+        {showPreview && input.trim() && (
+          <div className="markdown-preview">
+            <div className="preview-header">
+              <span>Vista previa</span>
+              <button className="close-preview" onClick={() => setShowPreview(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="preview-content">
+              <MarkdownMessage text={input} className="user-markdown" />
+            </div>
+          </div>
+        )}
+        
+        <form ref={formRef} onSubmit={sendMessage} className="message-form">
           <button 
             type="button"
             className="attachment-button"
@@ -417,16 +494,26 @@ function App() {
             accept="image/*,.pdf,.doc,.docx,.txt"
           />
           
-          <input
-            type="text"
+          <textarea
             ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
             placeholder="Escribe un mensaje..."
             className="message-input"
-            // autoFocus es bueno, pero no suficiente para dispositivos móviles
             autoFocus
+            rows={1}
           />
+          
+          {/* Botón para activar/desactivar la vista previa */}
+          <button
+            type="button"
+            className={`preview-button ${showPreview ? 'active' : ''}`}
+            onClick={() => setShowPreview(!showPreview)}
+            title={showPreview ? "Ocultar vista previa" : "Mostrar vista previa"}
+          >
+            {showPreview ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
           
           <button
             type="submit"
@@ -436,6 +523,21 @@ function App() {
             <Send />
           </button>
         </form>
+        
+        {/* Instrucciones para el usuario según el dispositivo */}
+        <div className="input-instructions">
+          {isMobile ? (
+            <small>
+              Presiona Enter para nueva línea. Usa el botón de enviar para enviar el mensaje.
+              {input.trim() && <span> Usa el botón <Eye size={12} /> para ver la vista previa.</span>}
+            </small>
+          ) : (
+            <small>
+              Presiona Enter para enviar. Shift+Enter para nueva línea.
+              {input.trim() && <span> Usa el botón <Eye size={12} /> para ver la vista previa.</span>}
+            </small>
+          )}
+        </div>
       </div>
     </div>
   );
