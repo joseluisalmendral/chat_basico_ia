@@ -24,6 +24,35 @@ const IntroAnimation = ({ onAnimationComplete }) => {
   );
 };
 
+// Componente separado para bloques de código
+const CodeBlock = ({ language, value }) => {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = () => {
+    copy(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  return (
+    <div className="code-block-container">
+      <div className="code-block-header">
+        <span className="code-language">{language}</span>
+        <button className="copy-button" onClick={handleCopy}>
+          {copied ? <Check size={16} /> : <Copy size={16} />}
+        </button>
+      </div>
+      <SyntaxHighlighter
+        style={atomDark}
+        language={language}
+        PreTag="div"
+      >
+        {value}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
+
 // Componente para renderizar mensajes con Markdown
 const MarkdownMessage = ({ text }) => {
   return (
@@ -37,39 +66,16 @@ const MarkdownMessage = ({ text }) => {
           h1: ({node, ...props}) => <h1 className="markdown-heading" {...props} />,
           h2: ({node, ...props}) => <h2 className="markdown-heading" {...props} />,
           h3: ({node, ...props}) => <h3 className="markdown-heading" {...props} />,
-          // Personalización para bloques de código
-          code({ node, inline, className, children, ...props }) {
+          // Utilizamos nuestro componente personalizado para bloques de código
+          code({node, inline, className, children, ...props}) {
             const match = /language-(\w+)/.exec(className || '');
-            const [copied, setCopied] = useState(false);
-            
-            const handleCopy = () => {
-              copy(String(children).replace(/\n$/, ''));
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            };
-            
-            return !inline && match ? (
-              <div className="code-block-container">
-                <div className="code-block-header">
-                  <span className="code-language">{match[1]}</span>
-                  <button className="copy-button" onClick={handleCopy}>
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
-                <SyntaxHighlighter
-                  style={atomDark}
-                  language={match[1]}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              </div>
-            ) : (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
+            if (!inline && match) {
+              return <CodeBlock 
+                language={match[1]} 
+                value={String(children).replace(/\n$/, '')} 
+              />;
+            }
+            return <code className={className} {...props}>{children}</code>;
           }
         }}
       >
