@@ -135,6 +135,7 @@ function App() {
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
   const inputAreaRef = useRef(null); // Referencia al área de input
+  const [shouldFocus, setShouldFocus] = useState(false);
 
   // URLs de los webhooks
   const webhooks = {
@@ -147,6 +148,27 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Efecto para aplicar el enfoque al input cuando la animación termina
+  useEffect(() => {
+    if (shouldFocus && inputRef.current) {
+      // Hacer scroll al área de input primero
+      if (inputAreaRef.current) {
+        inputAreaRef.current.scrollIntoView();
+      }
+      
+      // Solución para forzar el foco y mostrar el teclado en móviles
+      setTimeout(() => {
+        inputRef.current.focus();
+        // Algunos dispositivos móviles necesitan un click simulado
+        inputRef.current.click();
+        // Intento adicional para dispositivos iOS
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          inputRef.current.readOnly = false;
+        }
+      }, 300);
+    }
+  }, [shouldFocus]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -154,19 +176,8 @@ function App() {
   // Función para manejar el final de la animación
   const handleAnimationComplete = () => {
     setShowIntro(false);
-    
-    // Usar un pequeño retraso para asegurar que el DOM se ha actualizado
-    setTimeout(() => {
-      // Dar foco al input
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-      
-      // Hacer scroll hasta el área de input
-      if (inputAreaRef.current) {
-        inputAreaRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
+    // Activar el enfoque después de que la animación termine
+    setShouldFocus(true);
   };
 
   // Función para cambiar el modelo
@@ -304,10 +315,13 @@ function App() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
       // Volver a dar foco al input después de enviar el mensaje
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
     }
   };
 
@@ -410,6 +424,7 @@ function App() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe un mensaje..."
             className="message-input"
+            // autoFocus es bueno, pero no suficiente para dispositivos móviles
             autoFocus
           />
           

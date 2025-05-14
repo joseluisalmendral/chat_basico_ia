@@ -5,13 +5,10 @@
   padding: 0;
 }
 
-html, body {
+html, body, #root {
   height: 100%;
-  overflow: hidden; /* Evita el scroll doble */
   position: fixed;
-  width: 100%;
-  top: 0;
-  left: 0;
+  inset: 0;
 }
 
 body {
@@ -21,6 +18,7 @@ body {
   color: #f8f9fa;
   line-height: 1.6;
   -webkit-overflow-scrolling: touch; /* Para mejor scroll en iOS */
+  overflow: hidden;
 }
 
 /* Animación de Introducción */
@@ -33,15 +31,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+  background: linear-gradient(135deg, #6a1b9a 0%, #9c27b0 100%);
   z-index: 9999;
 }
 
 .intro-text {
   font-size: 3.5rem;
   font-weight: 800;
-  color: #9c27b0;
-  text-shadow: 0 0 8px rgba(156, 39, 176, 0.6);
+  color: white;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
   opacity: 0;
   transform: scale(0.8);
   animation: fadeInAndOut 3s ease-in-out forwards;
@@ -74,14 +72,14 @@ body {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Usamos height 100% en lugar de 100vh */
+  height: 100%;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   background-color: #1a1a1a;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  position: relative; /* Para posicionar elementos correctamente */
-  overflow: hidden; /* Evita scroll en el contenedor */
+  position: relative;
+  overflow: hidden;
 }
 
 /* Encabezado y selector de modelos */
@@ -92,7 +90,7 @@ body {
   flex-direction: column;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0; /* Evita que el encabezado se reduzca */
+  flex-shrink: 0;
 }
 
 .chat-header h1 {
@@ -147,7 +145,7 @@ body {
   background-color: #1a1a1a;
   scrollbar-width: thin;
   scrollbar-color: #9c27b0 #1a1a1a;
-  -webkit-overflow-scrolling: touch; /* Para scroll suave en iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 .messages-area::-webkit-scrollbar {
@@ -257,7 +255,9 @@ body {
   padding: 1rem;
   background-color: #212121;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  flex-shrink: 0; /* Evita que el área de input se reduzca */
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .message-form {
@@ -594,14 +594,13 @@ body {
 }
 
 @media (max-width: 480px) {
-  /* Optimizaciones específicas para móviles pequeños */
-  html, body {
-    overflow: hidden;
+  html, body, #root {
     height: 100%;
     position: fixed;
     width: 100%;
     top: 0;
     left: 0;
+    overscroll-behavior: none;
   }
   
   .chat-container {
@@ -632,6 +631,10 @@ body {
   
   .input-area {
     padding: 0.75rem 0.5rem;
+    /* Para asegurar que siempre sea visible */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
   }
   
   .message-form {
@@ -665,19 +668,28 @@ body {
   .code-block-container {
     margin: 0.5rem 0;
   }
-  
-  /* Forzar que se vea la barra de entrada */
-  .input-area {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
+}
+
+/* Fix para iOS */
+@supports (-webkit-touch-callout: none) {
+  .chat-container {
+    height: -webkit-fill-available;
   }
-  
-  /* Fix para ciertos navegadores móviles */
-  @supports (-webkit-touch-callout: none) {
-    /* CSS específico para iOS */
-    .chat-container {
-      height: -webkit-fill-available;
-    }
-  }
+}
+
+/* Estilos específicos para forzar que los elementos aparezcan como deberían */
+.chat-header {
+  background: linear-gradient(135deg, #6a1b9a 0%, #9c27b0 100%) !important;
+}
+
+.message-container.user .message-bubble {
+  background: linear-gradient(135deg, #6a1b9a 0%, #9c27b0 100%) !important;
+}
+
+.send-button {
+  background-color: #9c27b0 !important;
+}
+
+.send-button:hover {
+  background-color: #7b1fa2 !important;
 }
