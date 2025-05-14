@@ -134,6 +134,7 @@ function App() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const inputRef = useRef(null);
+  const inputAreaRef = useRef(null); // Referencia al área de input
 
   // URLs de los webhooks
   const webhooks = {
@@ -149,6 +150,24 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Función para manejar el final de la animación
+  const handleAnimationComplete = () => {
+    setShowIntro(false);
+    
+    // Usar un pequeño retraso para asegurar que el DOM se ha actualizado
+    setTimeout(() => {
+      // Dar foco al input
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      
+      // Hacer scroll hasta el área de input
+      if (inputAreaRef.current) {
+        inputAreaRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
 
   // Función para cambiar el modelo
   const changeModel = (newModel) => {
@@ -285,12 +304,16 @@ function App() {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      // Volver a dar foco al input después de enviar el mensaje
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
 
   // Si todavía se muestra la animación de introducción
   if (showIntro) {
-    return <IntroAnimation onAnimationComplete={() => setShowIntro(false)} />;
+    return <IntroAnimation onAnimationComplete={handleAnimationComplete} />;
   }
 
   return (
@@ -358,7 +381,7 @@ function App() {
       </div>
       
       {/* Input para enviar mensajes */}
-      <div className="input-area">
+      <div className="input-area" ref={inputAreaRef}>
         {attachment && (
           <FilePreview file={attachment} onRemove={removeAttachment} />
         )}
@@ -387,6 +410,7 @@ function App() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe un mensaje..."
             className="message-input"
+            autoFocus
           />
           
           <button
