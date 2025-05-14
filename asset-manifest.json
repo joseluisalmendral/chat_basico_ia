@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/chat_basico_ia/static/css/main.df56ca59.css",
-    "main.js": "/chat_basico_ia/static/js/main.53685ec8.js",
+    "main.js": "/chat_basico_ia/static/js/main.8b0e71fd.js",
     "index.html": "/chat_basico_ia/index.html",
     "main.df56ca59.css.map": "/chat_basico_ia/static/css/main.df56ca59.css.map",
-    "main.53685ec8.js.map": "/chat_basico_ia/static/js/main.53685ec8.js.map"
+    "main.8b0e71fd.js.map": "/chat_basico_ia/static/js/main.8b0e71fd.js.map"
   },
   "entrypoints": [
     "static/css/main.df56ca59.css",
-    "static/js/main.53685ec8.js"
+    "static/js/main.8b0e71fd.js"
   ]
 }
